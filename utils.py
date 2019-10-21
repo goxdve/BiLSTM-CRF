@@ -27,6 +27,16 @@ def read_corpus(filepath):
 
 
 def generate_train_dev_dataset(filepath, sent_vocab, tag_vocab, train_proportion=0.8):
+    """ Read corpus from given file path and split it into train and dev parts
+    Args:
+        filepath: file path
+        sent_vocab: sentence vocab
+        tag_vocab: tag vocab
+        train_proportion: proportion of training data
+    Returns:
+        train_data: data for training, list of tuples, each containing a sentence and corresponding tag.
+        dev_data: data for development, list of tuples, each containing a sentence and corresponding tag.
+    """
     sentences, tags = read_corpus(filepath)
     sentences = words2indices(sentences, sent_vocab)
     tags = words2indices(tags, tag_vocab)
@@ -113,16 +123,6 @@ def print_var(**kwargs):
 def main():
     sentences, tags = read_corpus('data/train.txt')
     print(len(sentences), len(tags))
-    with open('./data/train_view.txt', 'w', encoding='utf-') as f:
-        for s in sentences:
-            f.write(''.join(s) + '\n')
-    # test_data = list(zip(sentences, tags))
-    # for sentences, tags in batch_iter(test_data):
-    #     for s in sentences:
-    #         print(s)
-    #     for t in tags:
-    #         print(t)
-    #     break
 
 
 if __name__ == '__main__':

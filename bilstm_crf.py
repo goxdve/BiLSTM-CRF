@@ -55,16 +55,17 @@ class BiLSTMCRF(nn.Module):
         hidden_states, _ = self.encoder(padded_sentences)
         hidden_states, _ = pad_packed_sequence(hidden_states, batch_first=True)  # shape: (b, len, 2h)
         emit_score = self.hidden2emit_score(hidden_states)  # shape: (b, len, K)
-        emit_score = self.dropout(emit_score)
+        emit_score = self.dropout(emit_score)  # shape: (b, len, K)
         return emit_score
 
     def cal_loss(self, tags, mask, emit_score):
         """ Calculate CRF loss
         Args:
-            tags: shape (b, len)
-            mask: shape (b, len)
-            emit_score: (b, len, K)
+            tags (tensor): a batch of tags, shape (b, len)
+            mask (tensor): mask for the tags, shape (b, len), values in PAD position is 0
+            emit_score (tensor): emit matrix, shape (b, len, K)
         Returns:
+            loss (tensor): loss of the batch, shape (b,)
         """
         batch_size, sent_len = tags.shape
         # calculate score for the tags
@@ -85,8 +86,9 @@ class BiLSTMCRF(nn.Module):
         d = d.squeeze(dim=1)  # shape: (b, K)
         max_d = d.max(dim=-1)[0]  # shape: (b,)
         d = max_d + torch.logsumexp(d - max_d.unsqueeze(dim=1), dim=1)  # shape: (b,)
-        llk = total_score - d
-        return -llk
+        llk = total_score - d  # shape: (b,)
+        loss = -llk  # shape: (b,)
+        return loss
 
     def predict(self, sentences, sen_lengths):
         """
@@ -95,6 +97,7 @@ class BiLSTMCRF(nn.Module):
                                 of the longest sentence
             sen_lengths (list): sentence lengths
         Returns:
+            tags (list[list[str]]): predicted tags for the batch
         """
         batch_size = sentences.shape[0]
         mask = (sentences != self.sent_vocab[self.sent_vocab.PAD])  # shape: (b, len)

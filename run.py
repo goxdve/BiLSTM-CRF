@@ -33,6 +33,10 @@ import random
 
 
 def train(args):
+    """ Training BiLSTMCRF model
+    Args:
+        args: dict that contains options in command
+    """
     sent_vocab = Vocab.load(args['SENT_VOCAB'])
     tag_vocab = Vocab.load(args['TAG_VOCAB'])
     train_data, dev_data = utils.generate_train_dev_dataset(args['TRAIN'], sent_vocab, tag_vocab)
@@ -127,6 +131,10 @@ def train(args):
 
 
 def test(args):
+    """ Testing the model
+    Args:
+        args: dict that contains options in command
+    """
     sent_vocab = Vocab.load(args['SENT_VOCAB'])
     tag_vocab = Vocab.load(args['TAG_VOCAB'])
     sentences, tags = utils.read_corpus(args['TEST'])
@@ -134,7 +142,6 @@ def test(args):
     tags = utils.words2indices(tags, tag_vocab)
     test_data = list(zip(sentences, tags))
     print('num of test samples: %d' % (len(test_data)))
-
 
     device = torch.device('cuda' if args['--cuda'] else 'cpu')
     model = bilstm_crf.BiLSTMCRF.load(args['MODEL'], device)
@@ -171,6 +178,17 @@ def test(args):
 
 
 def cal_dev_loss(model, dev_data, batch_size, sent_vocab, tag_vocab, device):
+    """ Calculate loss on the development data
+    Args:
+        model: the model being trained
+        dev_data: development data
+        batch_size: batch size
+        sent_vocab: sentence vocab
+        tag_vocab: tag vocab
+        device: torch.device on which the model is trained
+    Returns:
+        the average loss on the dev data
+    """
     is_training = model.training
     model.eval()
     loss, n_sentences = 0, 0
@@ -186,6 +204,16 @@ def cal_dev_loss(model, dev_data, batch_size, sent_vocab, tag_vocab, device):
 
 
 def cal_statistics(tag, predicted_tag, tag_vocab):
+    """ Calculate TN, FN, FP for the given true tag and predicted tag.
+    Args:
+        tag (list[int]): true tag
+        predicted_tag (list[int]): predicted tag
+        tag_vocab: tag vocab
+    Returns:
+        tp: true positive
+        fp: false positive
+        fn: false negative
+    """
     tp, fp, fn = 0, 0, 0
 
     def func(tag1, tag2):
