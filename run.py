@@ -13,7 +13,7 @@ Options:
     --lr=<float>                        learning rate [default: 0.001]
     --log-every=<int>                   log every [default: 10]
     --validation-every=<int>            validation every [default: 250]
-    --patience-threshold=<float>        patience threshold [default: 098]
+    --patience-threshold=<float>        patience threshold [default: 0.98]
     --max-patience=<int>                time of continuous worse performance to decay lr [default: 4]
     --max-decay=<int>                   time of lr decay to early stop [default: 4]
     --lr-decay=<float>                  decay rate of lr [default: 0.5]
