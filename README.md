@@ -17,7 +17,7 @@ For testing, you can use the following command:
 ```
 sh run.sh test
 ```
-Also, if you are not able to use GPU, you can use (this procedure won't take long time when using CPU):
+Also, if you have no GPU, you can use the following command(this procedure won't take long time when using CPU):
 ```
 sh run.sh test-without-cuda
 ```
