@@ -21,7 +21,7 @@ Also, if you have no GPU, you can use the following command(this procedure won't
 ```
 sh run.sh test-without-cuda
 ```
-There is already a trained model in the [model](./model) folder, so you can directly executing the testing command directly without training.
+There is already a trained model in the [model](./model) folder, so you can execute the testing command directly without training.
 
 If you want to change some hyper-parameters, use the following command to refer to the options.
 ```
@@ -29,17 +29,15 @@ python run.py --help
 ```
 
 ## Result
-We evaluate the model by F1 score, here is an example for computing `TP`, `FP` and `FN`:
+We use `conlleval.pl` to evaluate the model's performance on test data, and
+the experiment result on testing data of the trained model is as follows:
 ```
-True tag: ['O', 'B-PER', 'I-PER', 'O', 'O', 'B-ORG', 'I-ORG', 'I-ORG', 'O']
-Predicted tag: ['O', 'B-PER', 'I-PER', 'O', 'O', 'B-ORG', 'I-ORG', 'O', 'O']
+processed 172601 tokens with 6192 phrases; found: 5660 phrases; correct: 4820.
+accuracy:  97.70%; precision:  85.16%; recall:  77.84%; FB1:  81.34
+              LOC: precision:  90.45%; recall:  82.31%; FB1:  86.19  2618
+              ORG: precision:  78.18%; recall:  75.66%; FB1:  76.90  1288
+              PER: precision:  82.38%; recall:  72.83%; FB1:  77.31  1754
 ```
-We have TP=1 (`['B-PER', 'I-PER']` in both tags), FN=1(`['B-ORG', 'I-ORG', 'I-ORG']` in the true tag), FP=1(`['B-ORG', 'I-ORG']` in the predicted tag).
-
-The experiment result on testing data of the trained model is as follows:
- * Precison: 0.929792
- * Recall: 0.920935
- * F1 score: 0.925342
 
 ## Reference
   1. [Bidirectional LSTM-CRF Models for Sequence Tagging](https://arxiv.org/abs/1508.01991)

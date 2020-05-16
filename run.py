@@ -1,7 +1,7 @@
 """
 Usage:
     run.py train TRAIN SENT_VOCAB TAG_VOCAB [options]
-    run.py test TEST SENT_VOCAB TAG_VOCAB MODEL [options]
+    run.py test TEST RESULT SENT_VOCAB TAG_VOCAB MODEL [options]
 
 Options:
     --dropout-rate=<float>              dropout rate [default: 0.5]
@@ -148,33 +148,18 @@ def test(args):
     print('start testing...')
     print('using device', device)
 
-    start = time.time()
-    n_iter, num_words = 0, 0
-    tp, fp, fn = 0, 0, 0
-
+    result_file = open(args['RESULT'], 'w')
     model.eval()
     with torch.no_grad():
         for sentences, tags in utils.batch_iter(test_data, batch_size=int(args['--batch-size']), shuffle=False):
-            sentences, sent_lengths = utils.pad(sentences, sent_vocab[sent_vocab.PAD], device)
-            predicted_tags = model.predict(sentences, sent_lengths)
-            n_iter += 1
-            num_words += sum(sent_lengths)
-            for tag, predicted_tag in zip(tags, predicted_tags):
-                current_tp, current_fp, current_fn = cal_statistics(tag, predicted_tag, tag_vocab)
-                tp += current_tp
-                fp += current_fp
-                fn += current_fn
-            if n_iter % int(args['--log-every']) == 0:
-                print('log: iter %d, %.1f words/sec, precision %f, recall %f, f1_score %f, time %.1f sec' %
-                      (n_iter, num_words / (time.time() - start), tp / (tp + fp), tp / (tp + fn),
-                       (2 * tp) / (2 * tp + fp + fn), time.time() - start))
-                num_words = 0
-                start = time.time()
-    print('tp = %d, fp = %d, fn = %d' % (tp, fp, fn))
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
-    f1_score = (2 * tp) / (2 * tp + fp + fn)
-    print('Precision: %f, Recall: %f, F1 score: %f' % (precision, recall, f1_score))
+            padded_sentences, sent_lengths = utils.pad(sentences, sent_vocab[sent_vocab.PAD], device)
+            predicted_tags = model.predict(padded_sentences, sent_lengths)
+            for sent, true_tags, pred_tags in zip(sentences, tags, predicted_tags):
+                sent, true_tags, pred_tags = sent[1: -1], true_tags[1: -1], pred_tags[1: -1]
+                for token, true_tag, pred_tag in zip(sent, true_tags, pred_tags):
+                    result_file.write(' '.join([sent_vocab.id2word(token), tag_vocab.id2word(true_tag),
+                                                tag_vocab.id2word(pred_tag)]) + '\n')
+                result_file.write('\n')
 
 
 def cal_dev_loss(model, dev_data, batch_size, sent_vocab, tag_vocab, device):
@@ -201,44 +186,6 @@ def cal_dev_loss(model, dev_data, batch_size, sent_vocab, tag_vocab, device):
             n_sentences += len(sentences)
     model.train(is_training)
     return loss / n_sentences
-
-
-def cal_statistics(tag, predicted_tag, tag_vocab):
-    """ Calculate TN, FN, FP for the given true tag and predicted tag.
-    Args:
-        tag (list[int]): true tag
-        predicted_tag (list[int]): predicted tag
-        tag_vocab: tag vocab
-    Returns:
-        tp: true positive
-        fp: false positive
-        fn: false negative
-    """
-    tp, fp, fn = 0, 0, 0
-
-    def func(tag1, tag2):
-        a, b, i = 0, 0, 0
-        while i < len(tag1):
-            if tag1[i] == tag_vocab['O']:
-                i += 1
-                continue
-            begin, end = i, i
-            while end + 1 < len(tag1) and tag1[end + 1] != tag_vocab['O']:
-                end += 1
-            equal = True
-            for j in range(max(0, begin - 1), min(len(tag1), end + 2)):
-                if tag1[j] != tag2[j]:
-                    equal = False
-                    break
-            a, b = a + equal, b + 1 - equal
-            i = end + 1
-        return a, b
-    t, f = func(tag, predicted_tag)
-    tp += t
-    fn += f
-    t, f = func(predicted_tag, tag)
-    fp += f
-    return tp, fp, fn
 
 
 def main():
